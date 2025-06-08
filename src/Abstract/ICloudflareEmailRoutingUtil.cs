@@ -27,7 +27,7 @@ public interface ICloudflareEmailRoutingUtil
     /// <summary>
     /// Creates a custom email address with routing rules.
     /// </summary>
-    ValueTask<Email_rule_response_single> CreateCustomAddress(string zoneIdentifier, string customEmail, string destinationAddressId, CancellationToken cancellationToken = default);
+    ValueTask<Email_rule_response_single> CreateCustomAddress(string zoneIdentifier, string customEmail, string destinationEmail, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Removes a custom email address and its routing rules.

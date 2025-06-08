@@ -66,7 +66,7 @@ public sealed class CloudflareEmailRoutingUtil : ICloudflareEmailRoutingUtil
         {
             _logger.LogDebug("Destination email '{Dest}' not found, creating it...", destinationEmail);
             Email_destination_address_response_single newDestination = await AddDestinationAddress(accountIdentifier, destinationEmail, cancellationToken).NoSync();
-            destinationAddressId = newDestination.Result?.Id?.ToString();
+            destinationAddressId = newDestination.Result?.Id;
 
             if (destinationAddressId == null)
             {
@@ -75,12 +75,12 @@ public sealed class CloudflareEmailRoutingUtil : ICloudflareEmailRoutingUtil
             }
         }
 
-        return await CreateCustomAddress(zoneIdentifier, customEmail, destinationAddressId, cancellationToken).NoSync();
+        return await CreateCustomAddress(zoneIdentifier, customEmail, destinationEmail, cancellationToken).NoSync();
     }
 
-    public async ValueTask<Email_rule_response_single> CreateCustomAddress(string zoneIdentifier, string customEmail, string destinationAddressId, CancellationToken cancellationToken = default)
+    public async ValueTask<Email_rule_response_single> CreateCustomAddress(string zoneIdentifier, string customEmail, string destinationEmail, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Creating custom routing rule for '{Custom}' to destination ID '{Dest}' in zone '{Zone}'", customEmail, destinationAddressId, zoneIdentifier);
+        _logger.LogInformation("Creating custom routing rule for '{Custom}' to destination ID '{Dest}' in zone '{Zone}'", customEmail, destinationEmail, zoneIdentifier);
         CloudflareOpenApiClient client = await _clientUtil.Get(cancellationToken).NoSync();
         var body = new Email_create_rule_properties
         {
@@ -91,7 +91,7 @@ public sealed class CloudflareEmailRoutingUtil : ICloudflareEmailRoutingUtil
                 new Email_rule_action
                 {
                     Type = Email_rule_action_type.Forward,
-                    Value = [destinationAddressId]
+                    Value = [destinationEmail]
                 }
             ],
             Matchers =
