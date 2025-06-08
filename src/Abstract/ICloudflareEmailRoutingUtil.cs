@@ -10,6 +10,29 @@ namespace Soenneker.Cloudflare.EmailRouting.Abstract;
 public interface ICloudflareEmailRoutingUtil
 {
     /// <summary>
+    /// Enables email routing for a zone and automatically sets up all required DNS records.
+    /// This uses Cloudflare's dedicated email routing enable endpoint which will:
+    /// - Add and lock the necessary MX records
+    /// - Add the required SPF records
+    /// - Configure any other DNS records needed for email routing
+    /// </summary>
+    /// <param name="zoneIdentifier">The Cloudflare zone identifier where email routing will be enabled.</param>
+    /// <param name="cancellationToken">Optional cancellation token to cancel the operation.</param>
+    /// <returns>True if email routing was successfully enabled; false otherwise.</returns>
+    ValueTask<bool> SetupEmailRoutingDns(string zoneIdentifier, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Disables email routing for a zone and removes all associated DNS records.
+    /// This uses Cloudflare's dedicated email routing disable endpoint which will:
+    /// - Remove all MX records that were added for email routing
+    /// - Remove any other DNS records that were added for email routing
+    /// </summary>
+    /// <param name="zoneIdentifier">The Cloudflare zone identifier where email routing will be disabled.</param>
+    /// <param name="cancellationToken">Optional cancellation token to cancel the operation.</param>
+    /// <returns>True if email routing was successfully disabled; false otherwise.</returns>
+    ValueTask<bool> DisableEmailRouting(string zoneIdentifier, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Adds a new destination address for email routing.
     /// </summary>
     ValueTask<Email_destination_address_response_single> AddDestinationAddress(string accountIdentifier, string email, CancellationToken cancellationToken = default);

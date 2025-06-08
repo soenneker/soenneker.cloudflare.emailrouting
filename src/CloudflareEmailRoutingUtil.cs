@@ -130,56 +130,68 @@ public sealed class CloudflareEmailRoutingUtil : ICloudflareEmailRoutingUtil
         {
             CloudflareOpenApiClient client = await _clientUtil.Get(cancellationToken).NoSync();
             
-            // Get the required DNS records from Cloudflare
-            var dnsSettings = await client.Zones[zoneIdentifier].Email.Routing.Dns.GetAsync(cancellationToken: cancellationToken).NoSync();
+            // Get the zone details to get the zone name
+            var zone = await client.Zones[zoneIdentifier].GetAsync(cancellationToken: cancellationToken).NoSync();
+            if (zone?.Result?.Name == null)
+            {
+                _logger.LogError("Failed to get zone details for {Zone}", zoneIdentifier);
+                return false;
+            }
+
+            // Enable email routing using the dedicated endpoint
+            var body = new Email_email_setting_dns_request_body
+            {
+                Name = zone.Result.Name
+            };
+
+            var response = await client.Zones[zoneIdentifier].Email.Routing.Dns.PostAsync(body, null, cancellationToken).NoSync();
             
-            if (dnsSettings?.AdditionalData == null || !dnsSettings.AdditionalData.ContainsKey("records"))
+            if (response?.Success != true)
             {
-                _logger.LogError("Failed to get DNS settings for email routing");
+                _logger.LogError("Failed to enable email routing for zone {Zone}", zoneIdentifier);
                 return false;
             }
 
-            var records = dnsSettings.AdditionalData["records"] as IEnumerable<dynamic>;
-            if (records == null)
-            {
-                _logger.LogError("No DNS records found in the response");
-                return false;
-            }
-
-            // Create each required DNS record
-            foreach (var record in records)
-            {
-                string type = record.Type.ToString();
-                string name = record.Name.ToString();
-                string content = record.Content.ToString();
-
-                var dnsRecord = new DnsRecords_dnsRecordPost
-                {
-                    Type = type,
-                    AdditionalData = new Dictionary<string, object>
-                    {
-                        {"name", name},
-                        {"content", content},
-                        {"ttl", 1},
-                        {"proxied", false}
-                    }
-                };
-
-                if (type == "MX" && record.Priority != null)
-                {
-                    dnsRecord.AdditionalData["priority"] = record.Priority;
-                }
-
-                await client.Zones[zoneIdentifier].Dns_records.PostAsync(dnsRecord, null, cancellationToken).NoSync();
-                _logger.LogDebug("Created DNS record: {Type} {Name} -> {Content}", type, name, content);
-            }
-
-            _logger.LogInformation("Successfully set up DNS records for email routing");
+            _logger.LogInformation("Successfully enabled email routing for zone {Zone}", zoneIdentifier);
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to set up DNS records for email routing");
+            _logger.LogError(ex, "Failed to enable email routing for zone {Zone}", zoneIdentifier);
+            return false;
+        }
+    }
+
+    public async ValueTask<bool> DisableEmailRouting(string zoneIdentifier, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Disabling email routing in zone '{Zone}'", zoneIdentifier);
+        
+        try
+        {
+            CloudflareOpenApiClient client = await _clientUtil.Get(cancellationToken).NoSync();
+            
+            // Get the zone details to get the zone name
+            var zone = await client.Zones[zoneIdentifier].GetAsync(cancellationToken: cancellationToken).NoSync();
+            if (zone?.Result?.Name == null)
+            {
+                _logger.LogError("Failed to get zone details for {Zone}", zoneIdentifier);
+                return false;
+            }
+
+            // Disable email routing using the dedicated endpoint
+            var body = new Email_email_setting_dns_request_body
+            {
+                Name = zone.Result.Name
+            };
+
+            await client.Zones[zoneIdentifier].Email.Routing.Dns.DeleteAsync(body, null, cancellationToken).NoSync();
+            
+            _logger.LogInformation("Successfully disabled email routing for zone {Zone}", zoneIdentifier);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to disable email routing for zone {Zone}", zoneIdentifier);
             return false;
         }
     }
