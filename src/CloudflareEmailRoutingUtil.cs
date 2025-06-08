@@ -5,6 +5,7 @@ using Soenneker.Cloudflare.Utils.Client.Abstract;
 using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -119,5 +120,67 @@ public sealed class CloudflareEmailRoutingUtil : ICloudflareEmailRoutingUtil
         _logger.LogDebug("Listing routing rules for zone '{Zone}'", zoneIdentifier);
         CloudflareOpenApiClient client = await _clientUtil.Get(cancellationToken).NoSync();
         return await client.Zones[zoneIdentifier].Email.Routing.Rules.GetAsync(cancellationToken: cancellationToken).NoSync();
+    }
+
+    public async ValueTask<bool> SetupEmailRoutingDns(string zoneIdentifier, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Setting up DNS records for email routing in zone '{Zone}'", zoneIdentifier);
+        
+        try
+        {
+            CloudflareOpenApiClient client = await _clientUtil.Get(cancellationToken).NoSync();
+            
+            // Get the required DNS records from Cloudflare
+            var dnsSettings = await client.Zones[zoneIdentifier].Email.Routing.Dns.GetAsync(cancellationToken: cancellationToken).NoSync();
+            
+            if (dnsSettings?.AdditionalData == null || !dnsSettings.AdditionalData.ContainsKey("records"))
+            {
+                _logger.LogError("Failed to get DNS settings for email routing");
+                return false;
+            }
+
+            var records = dnsSettings.AdditionalData["records"] as IEnumerable<dynamic>;
+            if (records == null)
+            {
+                _logger.LogError("No DNS records found in the response");
+                return false;
+            }
+
+            // Create each required DNS record
+            foreach (var record in records)
+            {
+                string type = record.Type.ToString();
+                string name = record.Name.ToString();
+                string content = record.Content.ToString();
+
+                var dnsRecord = new DnsRecords_dnsRecordPost
+                {
+                    Type = type,
+                    AdditionalData = new Dictionary<string, object>
+                    {
+                        {"name", name},
+                        {"content", content},
+                        {"ttl", 1},
+                        {"proxied", false}
+                    }
+                };
+
+                if (type == "MX" && record.Priority != null)
+                {
+                    dnsRecord.AdditionalData["priority"] = record.Priority;
+                }
+
+                await client.Zones[zoneIdentifier].Dns_records.PostAsync(dnsRecord, null, cancellationToken).NoSync();
+                _logger.LogDebug("Created DNS record: {Type} {Name} -> {Content}", type, name, content);
+            }
+
+            _logger.LogInformation("Successfully set up DNS records for email routing");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to set up DNS records for email routing");
+            return false;
+        }
     }
 }
