@@ -29,7 +29,7 @@ public sealed class CloudflareEmailRoutingUtil : ICloudflareEmailRoutingUtil
         _logger.LogDebug("Getting destination address ID for email '{Email}' on account '{Account}'", email, accountIdentifier);
         Email_destination_addresses_response_collection? addresses = await ListDestinationAddresses(accountIdentifier, cancellationToken).NoSync();
         Email_addresses? address = addresses?.Result?.FirstOrDefault(a => a.Email?.Equals(email, StringComparison.OrdinalIgnoreCase) == true);
-        return address?.Id?.ToString();
+        return address?.Id;
     }
 
     public async ValueTask<Email_destination_address_response_single> AddDestinationAddress(string accountIdentifier, string email, CancellationToken cancellationToken = default)
