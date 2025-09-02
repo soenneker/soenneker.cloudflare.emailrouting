@@ -35,32 +35,32 @@ public interface ICloudflareEmailRoutingUtil
     /// <summary>
     /// Adds a new destination address for email routing.
     /// </summary>
-    ValueTask<Email_destination_address_response_single> AddDestinationAddress(string accountIdentifier, string email, CancellationToken cancellationToken = default);
+    ValueTask<Email_destination_address_response_single?> AddDestinationAddress(string accountIdentifier, string email, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Removes a destination address from email routing.
     /// </summary>
-    ValueTask<Email_destination_address_response_single> RemoveDestinationAddress(string accountIdentifier, string destinationAddressId, CancellationToken cancellationToken = default);
+    ValueTask<Email_destination_address_response_single?> RemoveDestinationAddress(string accountIdentifier, string destinationAddressId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Lists all destination addresses.
     /// </summary>
-    ValueTask<Email_destination_addresses_response_collection> ListDestinationAddresses(string accountIdentifier, CancellationToken cancellationToken = default);
+    ValueTask<Email_destination_addresses_response_collection?> ListDestinationAddresses(string accountIdentifier, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Creates a custom email address with routing rules.
     /// </summary>
-    ValueTask<Email_rule_response_single> CreateCustomAddress(string zoneIdentifier, string customEmail, string destinationEmail, CancellationToken cancellationToken = default);
+    ValueTask<Email_rule_response_single?> CreateCustomAddress(string zoneIdentifier, string customEmail, string destinationEmail, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Removes a custom email address and its routing rules.
     /// </summary>
-    ValueTask<Email_rule_response_single> RemoveCustomAddress(string zoneIdentifier, string ruleId, CancellationToken cancellationToken = default);
+    ValueTask<Email_rule_response_single?> RemoveCustomAddress(string zoneIdentifier, string ruleId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Lists all routing rules.
     /// </summary>
-    ValueTask<Email_rules_response_collection> ListRoutingRules(string zoneIdentifier, CancellationToken cancellationToken = default);
+    ValueTask<Email_rules_response_collection?> ListRoutingRules(string zoneIdentifier, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets a destination address ID by matching a given email address.
@@ -78,5 +78,5 @@ public interface ICloudflareEmailRoutingUtil
     /// <param name="customEmail">The custom email address to create.</param>
     /// <param name="destinationEmail">The destination email to route to.</param>
     /// <returns>The response from the rule creation.</returns>
-    ValueTask<Email_rule_response_single> CreateCustomAddressWithEmail(string accountIdentifier, string zoneIdentifier, string customEmail, string destinationEmail, CancellationToken cancellationToken = default);
+    ValueTask<Email_rule_response_single?> CreateCustomAddressWithEmail(string accountIdentifier, string zoneIdentifier, string customEmail, string destinationEmail, CancellationToken cancellationToken = default);
 }

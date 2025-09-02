@@ -5,7 +5,6 @@ using Soenneker.Cloudflare.Utils.Client.Abstract;
 using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -33,7 +32,7 @@ public sealed class CloudflareEmailRoutingUtil : ICloudflareEmailRoutingUtil
         return address?.Id;
     }
 
-    public async ValueTask<Email_destination_address_response_single> AddDestinationAddress(string accountIdentifier, string email, CancellationToken cancellationToken = default)
+    public async ValueTask<Email_destination_address_response_single?> AddDestinationAddress(string accountIdentifier, string email, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Adding destination address '{Email}' to account '{Account}'", email, accountIdentifier);
         CloudflareOpenApiClient client = await _clientUtil.Get(cancellationToken).NoSync();
@@ -44,21 +43,21 @@ public sealed class CloudflareEmailRoutingUtil : ICloudflareEmailRoutingUtil
         return await client.Accounts[accountIdentifier].Email.Routing.Addresses.PostAsync(body, null, cancellationToken).NoSync();
     }
 
-    public async ValueTask<Email_destination_address_response_single> RemoveDestinationAddress(string accountIdentifier, string destinationAddressId, CancellationToken cancellationToken = default)
+    public async ValueTask<Email_destination_address_response_single?> RemoveDestinationAddress(string accountIdentifier, string destinationAddressId, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Removing destination address ID '{Id}' from account '{Account}'", destinationAddressId, accountIdentifier);
         CloudflareOpenApiClient client = await _clientUtil.Get(cancellationToken).NoSync();
         return await client.Accounts[accountIdentifier].Email.Routing.Addresses[destinationAddressId].DeleteAsync(cancellationToken: cancellationToken).NoSync();
     }
 
-    public async ValueTask<Email_destination_addresses_response_collection> ListDestinationAddresses(string accountIdentifier, CancellationToken cancellationToken = default)
+    public async ValueTask<Email_destination_addresses_response_collection?> ListDestinationAddresses(string accountIdentifier, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Listing destination addresses for account '{Account}'", accountIdentifier);
         CloudflareOpenApiClient client = await _clientUtil.Get(cancellationToken).NoSync();
         return await client.Accounts[accountIdentifier].Email.Routing.Addresses.GetAsync(cancellationToken: cancellationToken).NoSync();
     }
 
-    public async ValueTask<Email_rule_response_single> CreateCustomAddressWithEmail(string accountIdentifier, string zoneIdentifier, string customEmail, string destinationEmail, CancellationToken cancellationToken = default)
+    public async ValueTask<Email_rule_response_single?> CreateCustomAddressWithEmail(string accountIdentifier, string zoneIdentifier, string customEmail, string destinationEmail, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Creating custom address '{Custom}' -> '{Dest}' in zone '{Zone}'", customEmail, destinationEmail, zoneIdentifier);
         string? destinationAddressId = await GetDestinationAddressIdByEmail(accountIdentifier, destinationEmail, cancellationToken).NoSync();
@@ -66,8 +65,8 @@ public sealed class CloudflareEmailRoutingUtil : ICloudflareEmailRoutingUtil
         if (destinationAddressId == null)
         {
             _logger.LogDebug("Destination email '{Dest}' not found, creating it...", destinationEmail);
-            Email_destination_address_response_single newDestination = await AddDestinationAddress(accountIdentifier, destinationEmail, cancellationToken).NoSync();
-            destinationAddressId = newDestination.Result?.Id;
+            Email_destination_address_response_single? newDestination = await AddDestinationAddress(accountIdentifier, destinationEmail, cancellationToken).NoSync();
+            destinationAddressId = newDestination?.Result?.Id;
 
             if (destinationAddressId == null)
             {
@@ -79,7 +78,7 @@ public sealed class CloudflareEmailRoutingUtil : ICloudflareEmailRoutingUtil
         return await CreateCustomAddress(zoneIdentifier, customEmail, destinationEmail, cancellationToken).NoSync();
     }
 
-    public async ValueTask<Email_rule_response_single> CreateCustomAddress(string zoneIdentifier, string customEmail, string destinationEmail, CancellationToken cancellationToken = default)
+    public async ValueTask<Email_rule_response_single?> CreateCustomAddress(string zoneIdentifier, string customEmail, string destinationEmail, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Creating custom routing rule for '{Custom}' to destination ID '{Dest}' in zone '{Zone}'", customEmail, destinationEmail, zoneIdentifier);
         CloudflareOpenApiClient client = await _clientUtil.Get(cancellationToken).NoSync();
@@ -108,14 +107,14 @@ public sealed class CloudflareEmailRoutingUtil : ICloudflareEmailRoutingUtil
         return await client.Zones[zoneIdentifier].Email.Routing.Rules.PostAsync(body, null, cancellationToken).NoSync();
     }
 
-    public async ValueTask<Email_rule_response_single> RemoveCustomAddress(string zoneIdentifier, string ruleId, CancellationToken cancellationToken = default)
+    public async ValueTask<Email_rule_response_single?> RemoveCustomAddress(string zoneIdentifier, string ruleId, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Removing routing rule ID '{RuleId}' from zone '{Zone}'", ruleId, zoneIdentifier);
         CloudflareOpenApiClient client = await _clientUtil.Get(cancellationToken).NoSync();
         return await client.Zones[zoneIdentifier].Email.Routing.Rules[ruleId].DeleteAsync(cancellationToken: cancellationToken).NoSync();
     }
 
-    public async ValueTask<Email_rules_response_collection> ListRoutingRules(string zoneIdentifier, CancellationToken cancellationToken = default)
+    public async ValueTask<Email_rules_response_collection?> ListRoutingRules(string zoneIdentifier, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Listing routing rules for zone '{Zone}'", zoneIdentifier);
         CloudflareOpenApiClient client = await _clientUtil.Get(cancellationToken).NoSync();
@@ -131,7 +130,7 @@ public sealed class CloudflareEmailRoutingUtil : ICloudflareEmailRoutingUtil
             CloudflareOpenApiClient client = await _clientUtil.Get(cancellationToken).NoSync();
             
             // Get the zone details to get the zone name
-            var zone = await client.Zones[zoneIdentifier].GetAsync(cancellationToken: cancellationToken).NoSync();
+            Zones_0_get_200? zone = await client.Zones[zoneIdentifier].GetAsync(cancellationToken: cancellationToken).NoSync();
             if (zone?.Result?.Name == null)
             {
                 _logger.LogError("Failed to get zone details for {Zone}", zoneIdentifier);
@@ -144,7 +143,7 @@ public sealed class CloudflareEmailRoutingUtil : ICloudflareEmailRoutingUtil
                 Name = zone.Result.Name
             };
 
-            var response = await client.Zones[zoneIdentifier].Email.Routing.Dns.PostAsync(body, null, cancellationToken).NoSync();
+            Email_email_settings_response_single? response = await client.Zones[zoneIdentifier].Email.Routing.Dns.PostAsync(body, null, cancellationToken).NoSync();
             
             if (response?.Success != true)
             {
@@ -171,7 +170,7 @@ public sealed class CloudflareEmailRoutingUtil : ICloudflareEmailRoutingUtil
             CloudflareOpenApiClient client = await _clientUtil.Get(cancellationToken).NoSync();
             
             // Get the zone details to get the zone name
-            var zone = await client.Zones[zoneIdentifier].GetAsync(cancellationToken: cancellationToken).NoSync();
+            Zones_0_get_200? zone = await client.Zones[zoneIdentifier].GetAsync(cancellationToken: cancellationToken).NoSync();
             if (zone?.Result?.Name == null)
             {
                 _logger.LogError("Failed to get zone details for {Zone}", zoneIdentifier);
