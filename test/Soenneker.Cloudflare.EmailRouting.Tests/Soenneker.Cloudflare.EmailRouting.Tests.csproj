@@ -27,7 +27,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\Soenneker.Cloudflare.EmailRouting.csproj" />
+        <ProjectReference Include="..\..\src\Soenneker.Cloudflare.EmailRouting\Soenneker.Cloudflare.EmailRouting.csproj" />
     </ItemGroup>
 
     <ItemGroup>
