@@ -38,7 +38,7 @@ jobs:
         run: dotnet build test/Soenneker.Cloudflare.EmailRouting.Tests/Soenneker.Cloudflare.EmailRouting.Tests.csproj --configuration Release --no-restore --verbosity minimal
 
       - name: Test
-        run: dotnet test test/Soenneker.Cloudflare.EmailRouting.Tests/Soenneker.Cloudflare.EmailRouting.Tests.csproj --configuration Release --no-build --no-restore --verbosity minimal
+        run: dotnet test --project test/Soenneker.Cloudflare.EmailRouting.Tests/Soenneker.Cloudflare.EmailRouting.Tests.csproj --configuration Release --no-build --no-restore --verbosity minimal
 
       - name: Pack
         run: dotnet pack src/Soenneker.Cloudflare.EmailRouting/Soenneker.Cloudflare.EmailRouting.csproj --configuration Release --no-build --no-restore --output . --verbosity minimal
