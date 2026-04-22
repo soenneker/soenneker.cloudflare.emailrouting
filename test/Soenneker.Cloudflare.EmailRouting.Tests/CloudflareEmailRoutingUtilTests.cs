@@ -1,20 +1,19 @@
-﻿using Soenneker.Cloudflare.EmailRouting.Abstract;
-using Soenneker.Tests.FixturedUnit;
-using Xunit;
+using Soenneker.Cloudflare.EmailRouting.Abstract;
+using Soenneker.Tests.HostedUnit;
 
 namespace Soenneker.Cloudflare.EmailRouting.Tests;
 
-[Collection("Collection")]
-public sealed class CloudflareEmailRoutingUtilTests : FixturedUnitTest
+[ClassDataSource<Host>(Shared = SharedType.PerTestSession)]
+public sealed class CloudflareEmailRoutingUtilTests : HostedUnitTest
 {
     private readonly ICloudflareEmailRoutingUtil _util;
 
-    public CloudflareEmailRoutingUtilTests(Fixture fixture, ITestOutputHelper output) : base(fixture, output)
+    public CloudflareEmailRoutingUtilTests(Host host) : base(host)
     {
         _util = Resolve<ICloudflareEmailRoutingUtil>(true);
     }
 
-    [Fact]
+    [Test]
     public void Default()
     {
 
