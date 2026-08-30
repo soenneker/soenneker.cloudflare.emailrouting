@@ -12,7 +12,6 @@ using Soenneker.Cloudflare.OpenApiClient;
 
 namespace Soenneker.Cloudflare.EmailRouting;
 
-///<inheritdoc cref="ICloudflareEmailRoutingUtil"/>
 public sealed class CloudflareEmailRoutingUtil : ICloudflareEmailRoutingUtil
 {
     private readonly ICloudflareClientUtil _clientUtil;
@@ -54,7 +53,38 @@ public sealed class CloudflareEmailRoutingUtil : ICloudflareEmailRoutingUtil
     {
         _logger.LogDebug("Listing destination addresses for account '{Account}'", accountIdentifier);
         CloudflareOpenApiClient client = await _clientUtil.Get(cancellationToken).NoSync();
-        return await client.Accounts[accountIdentifier].Email.Routing.Addresses.GetAsync(cancellationToken: cancellationToken).NoSync();
+        EmailDestinationAddressesResponseCollection? combined = null;
+        var page = 1;
+
+        while (true)
+        {
+            EmailDestinationAddressesResponseCollection? response = await client.Accounts[accountIdentifier].Email.Routing.Addresses.GetAsync(config =>
+            {
+                config.QueryParameters.Page = page;
+                config.QueryParameters.PerPage = 50;
+            }, cancellationToken).NoSync();
+
+            if (response is null)
+                return combined;
+
+            if (combined is null)
+            {
+                combined = response;
+            }
+            else if (response.Result is { Count: > 0 })
+            {
+                combined.Result ??= [];
+                combined.Result.AddRange(response.Result);
+            }
+
+            int resultCount = response.Result?.Count ?? 0;
+            double? totalPages = response.ResultInfo?.TotalPages;
+
+            if (totalPages.HasValue ? page >= totalPages.Value : resultCount < 50)
+                return combined;
+
+            page++;
+        }
     }
 
     public async ValueTask<EmailRuleResponseSingle?> CreateCustomAddressWithEmail(string accountIdentifier, string zoneIdentifier, string customEmail, string destinationEmail, CancellationToken cancellationToken = default)
@@ -80,7 +110,7 @@ public sealed class CloudflareEmailRoutingUtil : ICloudflareEmailRoutingUtil
 
     public async ValueTask<EmailRuleResponseSingle?> CreateCustomAddress(string zoneIdentifier, string customEmail, string destinationEmail, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Creating custom routing rule for '{Custom}' to destination ID '{Dest}' in zone '{Zone}'", customEmail, destinationEmail, zoneIdentifier);
+        _logger.LogInformation("Creating custom routing rule for '{Custom}' to destination email '{Dest}' in zone '{Zone}'", customEmail, destinationEmail, zoneIdentifier);
         CloudflareOpenApiClient client = await _clientUtil.Get(cancellationToken).NoSync();
         var body = new EmailCreateRuleProperties
         {
@@ -154,6 +184,10 @@ public sealed class CloudflareEmailRoutingUtil : ICloudflareEmailRoutingUtil
             _logger.LogInformation("Successfully enabled email routing for zone {Zone}", zoneIdentifier);
             return true;
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to enable email routing for zone {Zone}", zoneIdentifier);
@@ -187,6 +221,10 @@ public sealed class CloudflareEmailRoutingUtil : ICloudflareEmailRoutingUtil
             
             _logger.LogInformation("Successfully disabled email routing for zone {Zone}", zoneIdentifier);
             return true;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception ex)
         {

@@ -67,6 +67,7 @@ public interface ICloudflareEmailRoutingUtil
     /// </summary>
     /// <param name="accountIdentifier">Cloudflare account identifier.</param>
     /// <param name="email">The email address to search for.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The destination address ID if found; otherwise null.</returns>
     ValueTask<string?> GetDestinationAddressIdByEmail(string accountIdentifier, string email, CancellationToken cancellationToken = default);
 
@@ -77,6 +78,7 @@ public interface ICloudflareEmailRoutingUtil
     /// <param name="zoneIdentifier">Cloudflare zone identifier.</param>
     /// <param name="customEmail">The custom email address to create.</param>
     /// <param name="destinationEmail">The destination email to route to.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The response from the rule creation.</returns>
     ValueTask<EmailRuleResponseSingle?> CreateCustomAddressWithEmail(string accountIdentifier, string zoneIdentifier, string customEmail, string destinationEmail, CancellationToken cancellationToken = default);
 }
