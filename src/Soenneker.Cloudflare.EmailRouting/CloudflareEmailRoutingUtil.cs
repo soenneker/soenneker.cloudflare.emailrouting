@@ -12,6 +12,7 @@ using Soenneker.Cloudflare.OpenApiClient;
 
 namespace Soenneker.Cloudflare.EmailRouting;
 
+/// <inheritdoc cref="ICloudflareEmailRoutingUtil" />
 public sealed class CloudflareEmailRoutingUtil : ICloudflareEmailRoutingUtil
 {
     private readonly ICloudflareClientUtil _clientUtil;
