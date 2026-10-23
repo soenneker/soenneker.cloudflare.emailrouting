@@ -121,7 +121,7 @@ public sealed class CloudflareEmailRoutingUtil : ICloudflareEmailRoutingUtil
             [
                 new EmailRuleAction
                 {
-                    Type = EmailRuleAction_type.Forward,
+                    Type = EmailRuleActionType.Forward,
                     Value = [destinationEmail]
                 }
             ],
@@ -129,8 +129,8 @@ public sealed class CloudflareEmailRoutingUtil : ICloudflareEmailRoutingUtil
             [
                 new EmailRuleMatcher
                 {
-                    Type = EmailRuleMatcher_type.Literal,
-                    Field = EmailRuleMatcher_field.To,
+                    Type = EmailRuleMatcherType.Literal,
+                    Field = ToField.To,
                     Value = customEmail
                 }
             ]
@@ -161,7 +161,7 @@ public sealed class CloudflareEmailRoutingUtil : ICloudflareEmailRoutingUtil
             CloudflareOpenApiClient client = await _clientUtil.Get(cancellationToken).NoSync();
             
             // Get the zone details to get the zone name
-            Zones0Get200? zone = await client.Zones[zoneIdentifier].GetAsync(cancellationToken: cancellationToken).NoSync();
+            Zones0Get200Response? zone = await client.Zones[zoneIdentifier].GetAsync(cancellationToken: cancellationToken).NoSync();
             if (zone?.Result?.Name == null)
             {
                 _logger.LogError("Failed to get zone details for {Zone}", zoneIdentifier);
@@ -205,7 +205,7 @@ public sealed class CloudflareEmailRoutingUtil : ICloudflareEmailRoutingUtil
             CloudflareOpenApiClient client = await _clientUtil.Get(cancellationToken).NoSync();
             
             // Get the zone details to get the zone name
-            Zones0Get200? zone = await client.Zones[zoneIdentifier].GetAsync(cancellationToken: cancellationToken).NoSync();
+            Zones0Get200Response? zone = await client.Zones[zoneIdentifier].GetAsync(cancellationToken: cancellationToken).NoSync();
             if (zone?.Result?.Name == null)
             {
                 _logger.LogError("Failed to get zone details for {Zone}", zoneIdentifier);
