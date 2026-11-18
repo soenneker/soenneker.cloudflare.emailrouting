@@ -26,7 +26,8 @@ public sealed class CloudflareEmailRoutingUtil : ICloudflareEmailRoutingUtil
 
     public async ValueTask<string?> GetDestinationAddressIdByEmail(string accountIdentifier, string email, CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Getting destination address ID for email '{Email}' on account '{Account}'", email, accountIdentifier);
+        if (_logger.IsEnabled(LogLevel.Debug))
+            _logger.LogDebug("Getting destination address ID for email '{Email}' on account '{Account}'", email, accountIdentifier);
         EmailDestinationAddressesResponseCollection? addresses = await ListDestinationAddresses(accountIdentifier, cancellationToken).NoSync();
         EmailAddresses? address = addresses?.Result?.FirstOrDefault(a => a.Email?.Equals(email, StringComparison.OrdinalIgnoreCase) == true);
         return address?.Id;
@@ -52,7 +53,8 @@ public sealed class CloudflareEmailRoutingUtil : ICloudflareEmailRoutingUtil
 
     public async ValueTask<EmailDestinationAddressesResponseCollection?> ListDestinationAddresses(string accountIdentifier, CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Listing destination addresses for account '{Account}'", accountIdentifier);
+        if (_logger.IsEnabled(LogLevel.Debug))
+            _logger.LogDebug("Listing destination addresses for account '{Account}'", accountIdentifier);
         CloudflareOpenApiClient client = await _clientUtil.Get(cancellationToken).NoSync();
         EmailDestinationAddressesResponseCollection? combined = null;
         var page = 1;
@@ -95,7 +97,8 @@ public sealed class CloudflareEmailRoutingUtil : ICloudflareEmailRoutingUtil
 
         if (destinationAddressId == null)
         {
-            _logger.LogDebug("Destination email '{Dest}' not found, creating it...", destinationEmail);
+            if (_logger.IsEnabled(LogLevel.Debug))
+                _logger.LogDebug("Destination email '{Dest}' not found, creating it...", destinationEmail);
             EmailDestinationAddressResponseSingle? newDestination = await AddDestinationAddress(accountIdentifier, destinationEmail, cancellationToken).NoSync();
             destinationAddressId = newDestination?.Result?.Id;
 
@@ -147,7 +150,8 @@ public sealed class CloudflareEmailRoutingUtil : ICloudflareEmailRoutingUtil
 
     public async ValueTask<EmailRulesResponseCollection?> ListRoutingRules(string zoneIdentifier, CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Listing routing rules for zone '{Zone}'", zoneIdentifier);
+        if (_logger.IsEnabled(LogLevel.Debug))
+            _logger.LogDebug("Listing routing rules for zone '{Zone}'", zoneIdentifier);
         CloudflareOpenApiClient client = await _clientUtil.Get(cancellationToken).NoSync();
         return await client.Zones[zoneIdentifier].Email.Routing.Rules.GetAsync(cancellationToken: cancellationToken).NoSync();
     }
